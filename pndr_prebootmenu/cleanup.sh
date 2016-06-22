@@ -1,0 +1,14 @@
+cd loader_prx
+make clean
+cd ..
+cd unemu_prx
+make clean
+cd ..
+cd installer
+make clean
+cd kstuff
+make clean
+cd ..
+cd ..
+make clean
+rm builddate.h

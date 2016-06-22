@@ -1,0 +1,41 @@
+
+PSP_BEGIN_EXPORTS
+
+PSP_EXPORT_START(syslib, 0, 0x8000)
+PSP_EXPORT_FUNC_HASH(module_start)
+PSP_EXPORT_VAR_HASH(module_info)
+PSP_EXPORT_END
+
+PSP_EXPORT_START(KernelStuff, 0, 0x4001)
+PSP_EXPORT_FUNC_HASH(kstuffInitBuffers)
+PSP_EXPORT_FUNC_HASH(kstuffMsInstallFW)
+PSP_EXPORT_FUNC_HASH(kstuffMsInstallAdditional)
+PSP_EXPORT_FUNC_HASH(kstuffBatMakeService)
+PSP_EXPORT_FUNC_HASH(kstuffBatMakeNormal)
+PSP_EXPORT_FUNC_HASH(kstuffSetUserFileWriteFunc)
+PSP_EXPORT_FUNC_HASH(kstuffGetMsPartitionStart)
+PSP_EXPORT_FUNC_HASH(kstuffBatSetSerial)
+PSP_EXPORT_FUNC_HASH(kstuffBatGetSerial)
+PSP_EXPORT_FUNC_HASH(kstuffInvalidateMSCache)
+PSP_EXPORT_FUNC_HASH(kstuffGetMoboVersions)
+PSP_EXPORT_FUNC_HASH(kstuffGetKCtrl)
+PSP_EXPORT_FUNC_HASH(kstuff__end)
+PSP_EXPORT_END
+
+PSP_EXPORT_START(KernelStuff_driver, 0, 0x0001)
+PSP_EXPORT_FUNC_HASH(kstuffInitBuffers)
+PSP_EXPORT_FUNC_HASH(kstuffMsInstallFW)
+PSP_EXPORT_FUNC_HASH(kstuffMsInstallAdditional)
+PSP_EXPORT_FUNC_HASH(kstuffBatMakeService)
+PSP_EXPORT_FUNC_HASH(kstuffBatMakeNormal)
+PSP_EXPORT_FUNC_HASH(kstuffSetUserFileWriteFunc)
+PSP_EXPORT_FUNC_HASH(kstuffGetMsPartitionStart)
+PSP_EXPORT_FUNC_HASH(kstuffBatSetSerial)
+PSP_EXPORT_FUNC_HASH(kstuffBatGetSerial)
+PSP_EXPORT_FUNC_HASH(kstuffInvalidateMSCache)
+PSP_EXPORT_FUNC_HASH(kstuffGetMoboVersions)
+PSP_EXPORT_FUNC_HASH(kstuffGetKCtrl)
+PSP_EXPORT_FUNC_HASH(kstuff__end)
+PSP_EXPORT_END
+
+PSP_END_EXPORTS

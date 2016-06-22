@@ -1,0 +1,30 @@
+v1.11
+=======
+*
+fixed "not working on 6.20-TN"
+
+
+----------------------------------------
+
+
+v1.10
+=======
+* 
+Did some mayor internal changes due to huge compatibility issues when actually running/using the plugin.
+Should be way more stable now, hopefully running on 100% (or at least 99.9% ;) ) of the games.
+Also it's only one .PRX now, not splitted in two anymore, since the main .PRX is now a native kernel mode one.
+
+*
+The usual minor bug fixes
+
+*
+Added a new feature to patch/overwrite the SFO params/info on save (see readme)
+
+
+----------------------------------------
+
+
+v1.00
+=======
+*
+Initial Release

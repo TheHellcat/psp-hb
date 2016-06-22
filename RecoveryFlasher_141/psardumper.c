@@ -1,0 +1,723 @@
+
+/*
+    #########################################################
+    ##                                                     ##
+    ##   R e c o v e r y   F l a s h e r                   ##
+    ##   by ---==> HELLCAT <==---                          ##
+    ##                                                     ##
+    #########################################################
+
+    ====  PSAR extraction / FW unpacking and installing  ====
+    ---------------------------------------------------------
+    based on M33 PSARDumper
+    ---------------------------------------------------------
+*/
+
+#include <pspsdk.h>
+#include <pspkernel.h>
+#include <pspdebug.h>
+#include <pspctrl.h>
+#include <pspsuspend.h>
+#include <psppower.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdarg.h>
+
+#include "libpsardumper.h"
+#include "pspdecrypt.h"
+#include "func.h"
+#include "helper.h"
+
+#define printf    pspDebugScreenPrintf
+
+
+int PSPType;
+char PBPPath[64];
+int fwflag;
+int ThisFileType = -1;
+
+u8 check_keys0[0x10] =
+{
+  0x71, 0xF6, 0xA8, 0x31, 0x1E, 0xE0, 0xFF, 0x1E,
+  0x50, 0xBA, 0x6C, 0xD2, 0x98, 0x2D, 0xD6, 0x2D
+};
+
+u8 check_keys1[0x10] =
+{
+  0xAA, 0x85, 0x4D, 0xB0, 0xFF, 0xCA, 0x47, 0xEB,
+  0x38, 0x7F, 0xD7, 0xE4, 0x3D, 0x62, 0xB0, 0x10
+};
+
+
+int GenerateSigCheck(u8 *buf)
+{
+  u8 enc[0xD0+0x14];
+  int iXOR, res;
+
+  memcpy(enc+0x14, buf+0x110, 0x40);
+  memcpy(enc+0x14+0x40, buf+0x80, 0x90);
+
+  for (iXOR = 0; iXOR < 0xD0; iXOR++)
+  {
+    enc[0x14+iXOR] ^= check_keys0[iXOR&0xF];
+  }
+
+  //if ((res = Encrypt((u32 *)enc, 0xD0)) < 0)
+  if ((res = hcRfHelperPspEncrypt((u32 *)enc, 0xD0)) < 0)
+  {
+    printf("Encrypt failed.\n");
+    return res;
+  }
+
+  for (iXOR = 0; iXOR < 0xD0; iXOR++)
+  {
+    enc[0x14+iXOR] ^= check_keys1[iXOR&0xF];
+  }
+
+  memcpy(buf+0x80, enc+0x14, 0xD0);
+  return 0;
+}
+
+
+////////////////////////////////////////////////////////////////////
+// big buffers for data. Some system calls require 64 byte alignment
+
+// big enough for the full PSAR file
+// get "imported" from main code
+static u8* g_dataPSAR; //[19000000] __attribute__((aligned(64)));
+int PSARBufferSize = 9400000;
+
+// big enough for the largest (multiple uses)
+static u8* g_dataOut; //[3000000] __attribute__((aligned(0x40)));
+
+// for deflate output
+//u8 g_dataOut2[3000000] __attribute__((aligned(0x40)));
+static u8* g_dataOut2;
+
+void ErrorExit(int milisecs, char *fmt, ...)
+{
+  va_list list;
+  char msg[256];
+
+  va_start(list, fmt);
+  vsprintf(msg, fmt, list);
+  va_end(list);
+
+  printf(msg);
+
+  sceKernelDelayThread(milisecs*1000);
+}
+
+////////////////////////////////////////////////////////////////////
+// File helpers
+
+int ReadFile(char *file, int seek, void *buf, int size)
+{
+  SceUID fd = sceIoOpen(file, PSP_O_RDONLY, 0);
+  if (fd < 0)
+    return fd;
+
+  if (seek > 0)
+  {
+    if (sceIoLseek(fd, seek, PSP_SEEK_SET) != seek)
+    {
+      sceIoClose(fd);
+      return -1;
+    }
+  }
+
+  int read = sceIoRead(fd, buf, size);
+
+  sceIoClose(fd);
+  return read;
+}
+
+// int LastFilePspType;
+int WriteFile(char *file, void *buf, int size)
+{
+  //int i;
+  //int skipfile;
+  SceIoStat fstat;
+  char s[256];
+  char tfile[256];
+
+  // newer PSARs have a double "/" in the path....
+  // ....who knows why, but we are going to filter it out!
+  if ( strncmp(file, "flash0://", 9) == 0 )
+  {
+    sprintf( s, "flash0:/%s", file+9 );
+    sprintf( file, s );
+  }
+
+
+  // discard filewrite?
+  if( strncmp("nul:", file, 4) == 0 ) { return size; }
+
+  // check if the current file belongs to the PSP we are currently running on
+  if( ThisFileType == -1 )
+  {
+    // file is not supposed to be written at all, or an error accoured
+    return size;
+  }
+  if( (ThisFileType != PSPType) && (ThisFileType != 0) )
+  {
+    // file is not for this PSP and is not common (=for all PSPs)
+    return size;
+  }
+
+  // this is the magic trick to make FW flashing on 3.40-OE (or even lower) working :-D
+  // (we remember: usual official and CFW updaters end in a brick, hence the 0xDADADADA error)
+  if( (strncmp(file, "flash0:/kd/", 11) == 0) || (strncmp( "flash0:/vsh/module/", file, 19 ) == 0) )
+  {
+    sprintf( tfile, "flash0:/.%s", file+7 );
+  } else {
+    sprintf( tfile, "%s", file );
+  }
+  // this is already the end of the magic trick.... TOO simple, eh? :-p
+
+  int written = hcWriteFile(tfile, buf, size);
+  if( (strncmp( "flash0:/kd/", file, 11 ) == 0) || (strncmp( "flash0:/vsh/module/", file, 19 ) == 0) || (strncmp( "flash0:/data/", file, 13 ) == 0) )
+  {
+    sceIoGetstat( tfile, &fstat );
+    fstat.st_mode = 0x216d;
+    fstat.st_attr = 0x07;
+    sceIoChstat( tfile, &fstat, 0x00FFFFFF );
+  }
+
+  sprintf( s, "  Writing file:\n  %s", file );
+  PrintNote( s );
+
+  //sceIoClose(fd);
+  return written;
+}
+
+static char com_table[0x4000];
+static int comtable_size;
+
+static char _1g_table[0x4000];
+static int _1gtable_size;
+
+static char _2g_table[0x4000];
+static int _2gtable_size;
+
+static char _3g_table[0x4000];
+static int _3gtable_size;
+
+enum
+{
+  MODE_ENCRYPT_SIGCHECK,
+  MODE_ENCRYPT,
+  MODE_DECRYPT,
+};
+
+static int FindTablePath(char *table, int table_size, char *number, char *szOut)
+{
+  int i, j, k;
+
+  for (i = 0; i < table_size-5; i++)
+  {
+    if (strncmp(number, table+i, 5) == 0)
+    {
+      for (j = 0, k = 0; ; j++, k++)
+      {
+        if (table[i+j+6] < 0x20)
+        {
+          szOut[k] = 0;
+          break;
+        }
+
+        if (!strncmp(table+i+6, "flash", 5) &&
+          j == 6)
+        {
+          szOut[6] = ':';
+          szOut[7] = '/';
+          k++;
+        }
+        else if (!strncmp(table+i+6, "ipl", 3) &&
+          j == 3)
+        {
+          szOut[3] = ':';
+          szOut[4] = '/';
+          k++;
+        }
+        else
+        {
+          szOut[k] = table[i+j+6];
+        }
+      }
+
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
+
+static char *GetVersion(char *buf)
+{
+  char *p = strrchr(buf, ',');
+
+  if (!p)
+    return NULL;
+
+  return p+1;
+}
+
+
+static int is5Dnum(char *str)
+{
+  int len = strlen(str);
+
+  if (len != 5)
+    return 0;
+
+  int i;
+
+  for (i = 0; i < len; i++)
+  {
+    if (str[i] < '0' || str[i] > '9')
+      return 0;
+  }
+
+  return 1;
+}
+
+
+  int cbFile;
+  SceUID fdPSAR;
+  int error = 0;
+  int psar_pos = 0, psar_offs;
+int main_psar( int checkonly )
+{
+  // to get rid of a "var unused" compiler error (it IS used....!)
+  cbFile = cbFile;
+
+    int mode=0, s;
+  u8 pbp_header[0x28];
+
+  if( checkonly == 1 )
+  {
+  mode = MODE_ENCRYPT_SIGCHECK;
+
+  sceKernelVolatileMemLock(0, (void *)&g_dataOut2, &s);
+
+  //printf("Loading psar...\n");
+
+  if (ReadFile(PBPPath, 0, pbp_header, sizeof(pbp_header)) != sizeof(pbp_header))
+  {
+    printf( "Cannot find updater .PBP.  (%s)", PBPPath );
+    ErrorExit(5000, "\n");
+    return -1;
+  }
+
+  psar_offs = *(u32 *)&pbp_header[0x24];
+  fdPSAR = sceIoOpen(PBPPath, PSP_O_RDONLY, 0);
+
+  cbFile = sceIoLseek32(fdPSAR, 0, PSP_SEEK_END) - psar_offs;
+  sceIoLseek32(fdPSAR, psar_offs, PSP_SEEK_SET);
+
+  if (sceIoRead(fdPSAR, g_dataPSAR, PSARBufferSize) <= 0)
+  {
+    ErrorExit(5000, "Error Reading updater .PBP.  (%s)", PBPPath);
+  }
+
+    if (memcmp(g_dataPSAR, "PSAR", 4) != 0)
+    {
+        ErrorExit(5000, "Not a PSAR file\n");
+        return -1;
+    }
+
+  if (pspPSARInit(g_dataPSAR, g_dataOut, g_dataOut2) < 0)
+  {
+    ErrorExit(5000, "pspPSARInit failed!.\n");
+    return -1;
+  }
+
+  //printf("Version %s.\n", GetVersion((char *)g_dataOut+0x10));
+  CachePBPVersion( GetVersion((char *)g_dataOut+0x10) );
+
+  }
+  if( checkonly == 1 ) { return 0; }
+
+// -------------------------------------------------------------------
+
+    while (1)
+  {
+    char name[128];
+    int cbExpanded;
+    int pos;
+    int signcheck;
+
+    int res = pspPSARGetNextFile(g_dataPSAR, cbFile, g_dataOut, g_dataOut2, name, &cbExpanded, &pos, &signcheck);
+
+    if (res < 0)
+    {
+      //ErrorExit(5000, "PSAR decode error, pos=0x%08X.\n", pos);
+      if (error)
+      {
+        //ErrorExit(5000, "PSAR decode error, pos=0x%08X.\n", pos);
+      }
+
+      int dpos = pos-psar_pos;
+      psar_pos = pos;
+
+      error = 1;
+      memmove(g_dataPSAR, g_dataPSAR+dpos, PSARBufferSize-dpos);
+
+      PrintNote( "  buffering...." );
+      if (sceIoRead(fdPSAR, g_dataPSAR+(PSARBufferSize-dpos), dpos) <= 0)
+      {
+        ErrorExit(5000, "Error Reading EBOOT.PBP.\n");
+      }
+
+      pspPSARSetBufferPosition(psar_pos);
+
+      continue;
+    }
+    else if (res == 0) /* no more files */
+    {
+      break;
+    }
+
+    if (is5Dnum(name))
+    {
+      if (strcmp(name, "00001") != 0 && strcmp(name, "00002") != 0 && strcmp(name, "00003") != 0)
+      {
+        int found = 0;
+
+        if ((_1gtable_size > 0) && (PSPType == 1000))
+        {
+          found = FindTablePath(_1g_table, _1gtable_size, name, name);
+          ThisFileType = 1000;
+        }
+
+        if ((!found && _2gtable_size > 0) && (PSPType == 2000))
+        {
+          found = FindTablePath(_2g_table, _2gtable_size, name, name);
+          ThisFileType = 2000;
+        }
+
+        if ((!found && _3gtable_size > 0) && (PSPType == 3000))
+        {
+          found = FindTablePath(_3g_table, _3gtable_size, name, name);
+          ThisFileType = 3000;
+        }
+
+        if (!found)
+        {
+          //printf("Warning: cannot find path of %s\n", name);
+          error = 0;
+          ThisFileType = -1;
+          continue;
+        }
+      }
+    }
+
+    if (!strncmp(name, "com:", 4) && comtable_size > 0)
+    {
+      ThisFileType = 0;
+      if (!FindTablePath(com_table, comtable_size, name+4, name))
+      {
+        ErrorExit(5000, "Error: cannot find path of %s.\n", name);
+      }
+    }
+
+    else if (!strncmp(name, "01g:", 4) && _1gtable_size > 0)
+    {
+      ThisFileType = 1000;
+      if (!FindTablePath(_1g_table, _1gtable_size, name+4, name))
+      {
+        ErrorExit(5000, "Error: cannot find path of %s.\n", name);
+      }
+    }
+
+    else if (!strncmp(name, "02g:", 4) && _2gtable_size > 0)
+    {
+      ThisFileType = 2000;
+      if (!FindTablePath(_2g_table, _2gtable_size, name+4, name))
+      {
+        ErrorExit(5000, "Error: cannot find path of %s.\n", name);
+      }
+    }
+
+        //printf("'%s' ", name);
+
+    char* szFileBase = strrchr(name, '/');
+
+    if (szFileBase != NULL)
+      szFileBase++;  // after slash
+    else
+      szFileBase = "err.err";
+
+    if (cbExpanded > 0)
+    {
+      char szDataPath[128];
+
+      if (!strncmp(name, "flash0:/", 8))
+      {
+        sprintf(szDataPath, "%s", name);
+        //sprintf(szDataPath, "ms0:/f0/%s", name+8);
+        //sprintf(szDataPath, "ms0:/F0/%s", name+8);
+      }
+
+      else if (!strncmp(name, "flash1:/", 8))
+      {
+        sprintf(szDataPath, "nul:/F1/%s", name+8);
+        //sprintf(szDataPath, "ms0:/F1/%s", name+8);
+      }
+
+      else if (!strcmp(name, "com:00000"))
+      {
+        comtable_size = pspDecryptTable(g_dataOut2, g_dataOut, cbExpanded, fwflag);
+
+        if (comtable_size <= 0)
+        {
+          ErrorExit(5000, "Cannot decrypt common table.  (%i %i 0x%08x)\n", cbExpanded, fwflag, comtable_size);
+        }
+
+        if (comtable_size > sizeof(com_table))
+        {
+          ErrorExit(5000, "Com table buffer too small. Recompile with bigger buffer.\n");
+        }
+
+        memcpy(com_table, g_dataOut2, comtable_size);
+        strcpy(szDataPath, "nul:/F0/PSARDUMPER/common_files_table.bin");
+        //strcpy(szDataPath, "ms0:/F0/PSARDUMPER/common_files_table.bin");
+      }
+
+      else if (!strcmp(name, "01g:00000") || !strcmp(name, "00001"))
+      {
+        _1gtable_size = pspDecryptTable(g_dataOut2, g_dataOut, cbExpanded, fwflag);
+
+        if (_1gtable_size <= 0)
+        {
+          ErrorExit(5000, "Cannot decrypt 1g table.\n");
+        }
+
+        if (_1gtable_size > sizeof(_1g_table))
+        {
+          ErrorExit(5000, "1g table buffer too small. Recompile with bigger buffer.\n");
+        }
+
+        memcpy(_1g_table, g_dataOut2, _1gtable_size);
+        strcpy(szDataPath, "nul:/F0/PSARDUMPER/fat_files_table.bin");
+        //strcpy(szDataPath, "ms0:/F0/PSARDUMPER/fat_files_table.bin");
+      }
+
+      else if (!strcmp(name, "02g:00000") || !strcmp(name, "00002"))
+      {
+        _2gtable_size = pspDecryptTable(g_dataOut2, g_dataOut, cbExpanded, fwflag);
+
+        if (_2gtable_size <= 0)
+        {
+          ErrorExit(5000, "Cannot decrypt 2g table %08X.\n", _2gtable_size);
+        }
+
+        if (_2gtable_size > sizeof(_2g_table))
+        {
+          ErrorExit(5000, "2g table buffer too small. Recompile with bigger buffer.\n");
+        }
+
+        memcpy(_2g_table, g_dataOut2, _2gtable_size);
+        strcpy(szDataPath, "nul:/F0/PSARDUMPER/slim_files_table.bin");
+        //strcpy(szDataPath, "ms0:/F0/PSARDUMPER/slim_files_table.bin");
+      }
+
+      else if (!strcmp(name, "00003"))
+      {
+        _3gtable_size = pspDecryptTable(g_dataOut2, g_dataOut, cbExpanded, fwflag);
+
+        if (_3gtable_size <= 0)
+        {
+          // We don't have yet the keys for table of 3000, they are only in mesg_led03g.prx
+          //printf("Cannot decrypt 3g table %08X.\n", _3gtable_size);
+          error = 0;
+          continue;
+        }
+
+        if (_3gtable_size > sizeof(_3g_table))
+        {
+          ErrorExit(5000, "3g table buffer too small. Recompile with bigger buffer.\n");
+        }
+
+        memcpy(_3g_table, g_dataOut2, _3gtable_size);
+        strcpy(szDataPath, "ms0:/F0/PSARDUMPER/3000_files_table.bin");
+      }
+
+      else
+      {
+        sprintf(szDataPath, "nul:/F0/PSARDUMPER/%s", strrchr(name, '/') + 1);
+        //sprintf(szDataPath, "ms0:/F0/PSARDUMPER/%s", strrchr(name, '/') + 1);
+      }
+
+      //printf("expanded");
+
+      if (signcheck && (mode == MODE_ENCRYPT_SIGCHECK)
+        && (strcmp(name, "flash0:/kd/_loadexec.prx") != 0)
+        && (strcmp(name, "flash0:/kd/_loadexec_01g.prx") != 0)
+        && (strcmp(name, "flash0:/kd/_loadexec_02g.prx") != 0))
+      {
+        //pspSignCheck(g_dataOut2);
+        GenerateSigCheck(g_dataOut2);
+      }
+
+      if ((mode != MODE_DECRYPT) || (memcmp(g_dataOut2, "~PSP", 4) != 0))
+      {
+        if (strstr(szDataPath, "ipl") && (strstr(szDataPath, "2000") || strstr(szDataPath, "02h") || strstr(szDataPath, "02g")))
+        {
+          // IPL Pre-decryption
+          cbExpanded = pspDecryptPRX(g_dataOut2, g_dataOut, cbExpanded);
+          if (cbExpanded <= 0)
+          {
+            printf("Warning: cannot pre-decrypt 2000 IPL.\n");
+          }
+          else
+          {
+            memcpy(g_dataOut2, g_dataOut, cbExpanded);
+          }
+        }
+
+        if (WriteFile(szDataPath, g_dataOut2, cbExpanded) != cbExpanded)
+              {
+          ErrorExit(5000, "Cannot write %s.\n", szDataPath);
+          break;
+        }
+
+        //printf(",saved");
+      }
+
+      if ((memcmp(g_dataOut2, "~PSP", 4) == 0) &&
+        (mode == MODE_DECRYPT))
+      {
+        int cbDecrypted = pspDecryptPRX(g_dataOut2, g_dataOut, cbExpanded);
+
+        // output goes back to main buffer
+        // trashed 'g_dataOut2'
+        if (cbDecrypted > 0)
+        {
+          u8* pbToSave = g_dataOut;
+          int cbToSave = cbDecrypted;
+
+          //printf(",decrypted");
+
+          if ((g_dataOut[0] == 0x1F && g_dataOut[1] == 0x8B) ||
+            memcmp(g_dataOut, "2RLZ", 4) == 0)
+          {
+            int cbExp = pspDecompress(g_dataOut, g_dataOut2, 3000000);
+
+            if (cbExp > 0)
+            {
+              //printf(",expanded");
+              pbToSave = g_dataOut2;
+              cbToSave = cbExp;
+            }
+            else
+            {
+              printf("Decompress error\n"
+                   "File will be written compressed.\n");
+            }
+          }
+
+          if (WriteFile(szDataPath, pbToSave, cbToSave) != cbToSave)
+          {
+            ErrorExit(5000, "Error writing %s.\n", szDataPath);
+          }
+
+          //printf(",saved!");
+        }
+        else
+        {
+          ErrorExit(5000, "Error in decryption.\n");
+        }
+      }
+
+      else if (strncmp(name, "ipl:", 4) == 0)
+      {
+        if( strcmp(szFileBase+(strlen(szFileBase)-4), ".bin") == 0 )
+        {
+          sprintf(szDataPath, "sceNandIpl_1k.bin");
+        } else if( strcmp(szFileBase+(strlen(szFileBase)-4), ".ipl") == 0 ) {
+          sprintf(szDataPath, "sceNandIpl_2k.bin");
+        } else {
+          sprintf(szDataPath, "nul:/0");
+        }
+        ThisFileType = 0;
+        WriteFile( szDataPath, g_dataOut2, cbExpanded );
+        sprintf(szDataPath, "nul:/F0/PSARDUMPER/part1_%s", szFileBase);
+        //sprintf(szDataPath, "ms0:/F0/PSARDUMPER/part1_%s", szFileBase);
+
+        int cb1 = pspDecryptIPL1(g_dataOut2, g_dataOut, cbExpanded);
+        if (cb1 > 0 && (WriteFile(szDataPath, g_dataOut, cb1) == cb1))
+        {
+          int cb2 = pspLinearizeIPL2(g_dataOut, g_dataOut2, cb1);
+          sprintf(szDataPath, "nul:/F0/PSARDUMPER/part2_%s", szFileBase);
+          //sprintf(szDataPath, "ms0:/F0/PSARDUMPER/part2_%s", szFileBase);
+
+          WriteFile(szDataPath, g_dataOut2, cb2);
+
+          int cb3 = pspDecryptIPL3(g_dataOut2, g_dataOut, cb2);
+          sprintf(szDataPath, "nul:/F0/PSARDUMPER/part3_%s", szFileBase);
+          //sprintf(szDataPath, "ms0:/F0/PSARDUMPER/part3_%s", szFileBase);
+          WriteFile(szDataPath, g_dataOut, cb3);
+        }
+      }
+    }
+    else if (cbExpanded == 0)
+    {
+      //printf("empty");
+    }
+
+    //printf("\n");
+    scePowerTick(0);
+  }
+
+  //ExtractReboot(mode, "ms0:/F0/kd/loadexec.prx", "ms0:/F0/reboot.bin", "reboot.bin");
+  //ExtractReboot(mode, "ms0:/F0/kd/loadexec_02g.prx", "ms0:/F0/reboot_02g.bin", "reboot_02g.bin");
+
+    scePowerTick(0);
+  //ErrorExit(10000, "Done.\nAuto-exiting in 10 seconds.\n");
+
+    return 0;
+}
+
+
+void VerifyPBPPath( void )
+{
+  int r;
+  char s[64];
+
+  r = sceIoOpen( PBPPath, PSP_O_RDONLY, 0777 );
+  sceIoClose( r );
+  if( r<0 )
+  {
+    sprintf( s, "ms0:/%s", PBPPath );
+    sprintf( PBPPath, "%s", s );
+  }
+}
+
+void psarInitPsarDumper( u8* buf1, u8* buf2, int g )
+{
+  g_dataPSAR = buf1;
+  g_dataOut = buf2;
+  PSPType = g;
+
+  sprintf( PBPPath, "371.PBP" );
+  VerifyPBPPath();
+}
+int psarCopyFwFiles( int checkonly )
+{
+  hcRfHelperInitMangleSyscall();
+  return main_psar( checkonly );
+}
+void psarSetPBPPath( char* path )
+{
+  sprintf( PBPPath, "%s", path );
+
+  fwflag = 0;
+  if( strcmp(path, "401.PBP") == 0 ) { fwflag = 2; }
+  if( strcmp(path, "500.PBP") == 0 ) { fwflag = 3; }
+
+  VerifyPBPPath();
+}

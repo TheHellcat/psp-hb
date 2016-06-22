@@ -1,0 +1,35 @@
+
+PSP_BEGIN_EXPORTS
+
+PSP_EXPORT_START(syslib, 0, 0x8000)
+PSP_EXPORT_FUNC_HASH(module_start)
+PSP_EXPORT_VAR_HASH(module_info)
+PSP_EXPORT_END
+
+PSP_EXPORT_START(hcRfHelper, 0, 0x4001)
+PSP_EXPORT_FUNC_HASH(hcRfHelperGetMoboVersions)
+PSP_EXPORT_FUNC_HASH(hcRfHelperLoadStartModule)
+PSP_EXPORT_FUNC_HASH(hcRfHelperPspFindProc)
+PSP_EXPORT_FUNC_HASH(hcRfHelperIoBridgeUnassign)
+PSP_EXPORT_FUNC_HASH(hcRfHelperRebootToUpdater)
+PSP_EXPORT_FUNC_HASH(hcRfHelperIoBridgeLFatfmt)
+PSP_EXPORT_FUNC_HASH(hcRfHelperInitMangleSyscall)
+PSP_EXPORT_FUNC_HASH(hcRfHelperPspEncrypt)
+PSP_EXPORT_FUNC_HASH(hcRfHelperPatchLFatEncryption)
+PSP_EXPORT_FUNC_HASH(hcRfHelperIoBridgeWriteFile)
+PSP_EXPORT_END
+
+PSP_EXPORT_START(hcRfHelper_driver, 0, 0x0001)
+PSP_EXPORT_FUNC_HASH(hcRfHelperGetMoboVersions)
+PSP_EXPORT_FUNC_HASH(hcRfHelperLoadStartModule)
+PSP_EXPORT_FUNC_HASH(hcRfHelperPspFindProc)
+PSP_EXPORT_FUNC_HASH(hcRfHelperIoBridgeUnassign)
+PSP_EXPORT_FUNC_HASH(hcRfHelperRebootToUpdater)
+PSP_EXPORT_FUNC_HASH(hcRfHelperIoBridgeLFatfmt)
+PSP_EXPORT_FUNC_HASH(hcRfHelperInitMangleSyscall)
+PSP_EXPORT_FUNC_HASH(hcRfHelperPspEncrypt)
+PSP_EXPORT_FUNC_HASH(hcRfHelperPatchLFatEncryption)
+PSP_EXPORT_FUNC_HASH(hcRfHelperIoBridgeWriteFile)
+PSP_EXPORT_END
+
+PSP_END_EXPORTS

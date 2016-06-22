@@ -1,0 +1,9 @@
+Changes on 1.41 since 1.40
+
+[*] Updated flashing of 5.00-M33 to 5.00-M33-3
+
+[*] Fixed backing up of CFWs with the 1.50 AddOn installed. Those backups have been incomplete (the 1.50 kernel wasn't included in the backup), now everything is propperly backed up.
+
+[*] Fixed a bug when the program got a bit confusored when stumbling over a 150.PBP while caching the updater modules (150.PBP is now skipped, there are no modules to extract in there anyway)
+
+[*] Added a warning about not resetting/formating flash1 when flashing a different FW than currently installed (keeping flash1 by flashing a different FW version can cause confusion for the new FW)

@@ -1,0 +1,23 @@
+Changes on 1.50 since 1.41
+
+[*] Updated 5.00-M33 installation to revision 4
+
+[*] Introduced "Advanced Mode" of operations - potentially dangerous functions (some of the new ones might be) are usually completely hidden and are only available when "Advanced Mode" is triggered. Those functions are meant for the more experienced users that know what they are doing quite well....
+
+[*] Added support for installing 3.80-M33 and 3.90-M33
+
+[*] Added support for installing a fresh 1.50 OFW on classic PSPs (a.k.a. Fat PSP) without having made a backup of a running 1.50 first. (Actually it first creates a new "backup" set containing a fresh 1.50 OFW that you can then use to install/restore it to your PSP)
+
+[*] Changed the menu a bit. Due to the ammount of FW versions now supported there's no longer one item for each FW but one menu option for selecting the desired version and one to engage the installation.
+
+[*] Added: Creation of NAND-Dump (fully compatible to DDC dumps)
+
+[*] Added: [Advamced Mode] Writing back of NAND images. Complete dump, IPL only or LFlash only
+
+[*] Added: [Advanced Mode] Installing selected firmware version as ORIGINAL firmware
+
+[*] Added: ressurection.prx replacement - with that you can run Recovery Flasher directly instead of of the original DDC menu when booting up a DDC magic stick. WORKS ONLY FOR DDCv7!!!
+
+[*] When running either as DDC main menu replacement (ressurection.prx) OR launched from a DDC booted FW (from memstick) you have the option to either boot up / exit to the XMB or to jump into the original DDC menu. So when using the ressurection.prx replacement you are still able to use the DDC features.
+
+[*] Fixed: App-Launcher display mess up when more additional apps/games were available than fitted on screen

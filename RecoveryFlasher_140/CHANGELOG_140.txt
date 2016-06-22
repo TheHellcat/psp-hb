@@ -1,0 +1,7 @@
+Changes on 1.40 since 1.32
+
+[*] Added native support for installing a fresh 5.00-M33
+
+[*] Added option to cache the special modules from all updater .PBP currently on your memstick.
+The modules are saved seperately and - if present - used directly instead of extracting them from the required updater (again) when performing a restore of a backup.
+This way you can save space on the memstick by deleting the updater .PBPs if you don't need them otherwise.

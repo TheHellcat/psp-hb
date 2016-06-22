@@ -1,0 +1,17 @@
+TARGET = rflash
+OBJS = main.o func.o helper.o pspPSAR.o pspDecrypt.o fastlz.o psardumper.o iplupdate.o
+
+INCDIR =
+CFLAGS = -O2 -G0 -Wall -DPANDORA
+CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti
+ASFLAGS = $(CFLAGS)
+
+BUILD_PRX = 0
+PSP_FW_VERSION = 300
+
+LIBDIR =
+LIBS = -lpsppower
+LDFLAGS =
+
+PSPSDK=$(shell psp-config --pspsdk-path)
+include $(PSPSDK)/lib/build.mak

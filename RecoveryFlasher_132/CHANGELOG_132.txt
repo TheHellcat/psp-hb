@@ -1,0 +1,9 @@
+Changes on 1.32 since 1.30
+
+- fixed a flaw in the backup/restore functions that made them going haywire on CFWs of 3.52 and below when restoring a full firmware from a backup.
+  Now works fine on those lower CFWs as well :)
+
+- Well, this one is more "just for fun" than meant serious.... I made an additional build of the app, that runns on unpatched, virgin, original 1.50 :D
+  Restoring and creating backups works as fine as installing a fresh M33 CFW (3.71/4.01) - YES, you can go from 1.50 STRAIGHT AND NONSTOP to a fresh 4.01-M33 this way!
+  The other way round also works: restoring a 1.50 from a backup when running on 4.01.
+  (this might also help people having installed the 1.50 AddOn and so unable to use the original build)

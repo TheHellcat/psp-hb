@@ -1,0 +1,29 @@
+Changes on 1.60 since 1.50
+
+
+[*] Updated 5.00-M33 installation to revision 6
+
+[*] Changed autonaming of new backup folders to include date, firmware, psp model
+
+[*] Made the resurrecion.prx replacement function working on all DDCs from 6 and above
+
+[*] Added detection of PSP 3000 and PSP 2000 TA-088v3+. Flash writing functions will be disabled on those PSPs as they are not CFW capable and flashing would result in a brick
+
+[*] Added support for "Firmware Packs" - theese, like addons, packs will eliminate the need for a complete new release only when a new (C)FW is released. Instead of releasing a new Recovery Flasher it'll just be such a pack, enabling Recovery Flasher to install the new firmware until an update of the main app is done that supports the firmware natively. Can/Will also be used for making Recovery Flasher install CFWs not supported, like GEN and such.
+
+[*] Added complete checksum-check of the updater .PBP going to be used to avoid corrupted/incomplete .PBPs causing a brick
+
+[*] Added full verify of the NAND dump that got written to be sure you have a good one
+
+[*] Added detection of HEN mode
+
+[*] Added detection and propper handling if a backup set contains OFW instead of CFW (like when made from HEN)
+
+
+Beta 3:
+
+[*] Added better NAND dump handling. New dumps are now created with names similar to the (new) backup slot names (and now go into /flash-nanddumps), incl. an ID for the PSP they are made on, on NAND restore a list is shown with all available dumps matching the ID of the current PSP to choose from (the ID matching should prevent choosing a wrong dump accidentally)
+
+[*] Added back/cancel on backup creation and restore
+
+[*] Backups made from HEN mode are tagged to identify them as containing ORIGINAL firmware (as those backups do!)

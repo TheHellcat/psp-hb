@@ -1,0 +1,53 @@
+1.20
+-------
+*
+added option to disable PTF changing/randomizing
+
+*
+added randomizing/changing of the gameboot
+
+*
+added randomizing/changing of custom XMB waves (system_plugin_bg.rco)
+
+*
+added randomizing/changing of XMB font
+
+*
+added file extension filter for scanning directories
+i.e. it will now only fetch .BMP for wall-/wavepapers, .PTF for themes
+and so forth....
+
+
+1.14
+-------
+*
+Fixed some lockups during start
+
+*
+Fixed another conflict with wavepapers in "Once per day" mode
+
+*
+added PTF changing/randomizing :D
+
+*
+Added two PC based (Windows) tools for making propper 01-12.bmp replacements (background behind XMB waves) and perfect 480x272x24 PSP wallpapers you can then use with the Wallpaper-Changer.
+Both tools take various image formats in any possible resolution as source images and should make most converting tasks very easy (two mouseclicks, and you're set :))
+
+
+1.10
+-------
+*
+Added capability of changing/randomizing the background *BEHIND* the XMB wave lines
+(WITHOUT touching the flash0:! So, perfectly save ;))
+Read the notes about this in the readme when having trouble with it!
+
+*
+Wallpapers are now finally copied BEFORE the XMB loads, so you see the change imediately, not at the next reboot
+
+*
+Major internal changes (making the plugin pure kernel mode and dealing with the consequences), the usual bug hunting and some cleaning up of the code.
+
+
+1.00
+-------
+initial release

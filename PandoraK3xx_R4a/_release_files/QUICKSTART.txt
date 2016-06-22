@@ -1,0 +1,62 @@
+
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  !!
+  !!   THIS GUIDE IS OUTDATED SINCE REV 4
+  !!
+  !!   since the new menu, there are no button combos to press
+  !!   anymore.
+  !!   But this might still show the general idea and get you started.
+  !!
+  !!
+
+
+
+
+OK, here's a very short guide for a very easy setup of a complete Pandora set!
+
+Including the preparations of the memstick.
+Without hazzeling around with the commanprompt tools for Windows,
+all done from the PSP with a few simple button presses!
+
+
+1)
+Make sure you have nothing on the memstick you want to keep!
+Now FORMAT the memstick with the PSPs function for doing so
+from Systemconfig => Format MemStick
+
+2)
+Copy the folder "pan3xx" from this archive to /PSP/GAME on your memstick, and run it
+
+3)
+Press R+X, and confirm with R+L+X to repartition and format the memstick
+(this is needed to reserve space for the MS IPL)
+
+4)
+Restart the PSP and connect it to the PC again via USB.
+Create the folder /PSP and then /PSP/GAME on the memstick.
+Copy (again ;-)) the folder "pan3xx" from this archive to /PSP/GAME
+
+5)
+Copy the official 1.50 updater, named as UPDATE.PBP, to the root of your memstick.
+(X:\UPDATE.PBP, if X is the driveletter of your PSP)
+
+6)
+Run the "Pandora for 3.xx" installer again.
+This time press X to install all files to the memstick.
+
+7)
+When the copy of the files is finished, press L+X, when asked to do so.
+
+8)
+Restart the installer once again and press O to make your battery to a Pandora one
+
+9)
+Press /\ to finally exit the installer.
+
+
+You have a full set of a Pandora Magic MemoryStick and a Pandora Battery now!
+Enjoy!
+
+Like it? I certainly do :-)
+
+-HELLCAT

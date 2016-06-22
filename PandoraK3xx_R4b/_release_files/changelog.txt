@@ -1,0 +1,55 @@
+Changes in Rev4b
+
+- replaced DDCv6 install with DDCv7
+
+- replaced ELF-Menu 0.3 with 0.4 for DDCv4 additional tools
+
+
+Changes in Rev4a
+
+- added installation of DDCv6
+
+
+Changes in Rev4:
+
+- added a new menu system for more easy navigation of all available options
+  (I ran out of buttons for new functions *lol*)
+  Usage should be a bit more easy now, less confusion....
+
+- added option to install TimeMachine IPL to the MemStick
+  (the IPL is build in, not required to have it as file on the MemStick)
+
+- added option for installing a DDC stick! ("Desparter Del Cementario", or however it's spelled ;-) )
+  Now you can finally make a MagicStick with this app that also works perfectly on the Slim and
+  installs a recent CFW! :-)
+  No need for any additional tools or setups.
+  (3.40 module extraction based on M33's PSARDumper)
+
+- added option to modify a DDC MagicStick to launch ELF-Menu, instead of the original
+  DDC ressurection.elf - already presupplied with NAND-Tool (propperly set up) and the
+  original ressurection to be launched from the menu.
+  For all you maintanance needs :-)
+
+- It now looks for the 1.50 updater under "150.PBP", no longer under "UPDATE.PBP"!
+
+- added a small check for all required .PBPs, displays a small notice when some are missing
+
+
+
+Changes in Rev3b:
+
+- added a warning/notice if the program detects a TA-085-v2+ mainboard
+
+
+
+Changes from Rev2b to Rev3:
+
+- Uses direct hardware access code from Silverspring to set battery serial, so it should work on 3.80 as well....
+
+- Can write and read back the serial to file (ms0:/batser.bin) - you can also use this to customize the serial by editing this file with a hexeditor before reading it back in
+(if a restore from file is attempted without the file beeing present, the default serial will just be used instead ;))
+
+- Now shows current battery serial on main menu screen
+
+- Upon request (and due to be found cool :D) you can also choose/set the name of the memorystick after reformatting :)
+Like for the battery serial, put a file "msname.txt" in the root of your memstick, containing the name you want.

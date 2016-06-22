@@ -1,0 +1,21 @@
+//   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   //
+//      THIS SOURCE IS PUBLISHED UNDER THE GPL      //
+//      everything released based on this MUST      //
+//      be released containing it's source and      //
+//      be    under   the    GPL    as    well      //
+//   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   //
+
+
+This is the sourcecode for HELLCAT's SaveGame-Deemer
+
+You can look at it, see how things are done, you can
+make own stuff based on this.... whatever you like.
+
+HOWEVER:
+If you release something based on this, you MUST include
+your source and release it under the GPL as well.
+
+And of course: credit, where credit is due!
+
+
+May the source be with you!

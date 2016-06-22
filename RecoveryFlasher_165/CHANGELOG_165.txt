@@ -1,0 +1,28 @@
+Changes on 1.65 since 1.60
+
+
+[b][i]First off, a small "what's NOT (yet?) supported":[/i] ANY kind of flashing on "newer 2000s", PSP 3000 or the PSPgo[/b]
+If support for those models will ever, in any way be added to Recovery Flasher is doubtful (mostly as there's no CFWs for those).
+MAYBE (and I can't stress the *MAYBE* enough, it's more likely a "likely not") support to flash OFW on (some of) those models might be added one day for the sake of downgrading the OFW.
+
+[i]And with that out of my system, here's the "what's new":[/i]
+
+[*] fixed compatibility with 6.20-TN HEN
+
+[*] added check for 6.20-TN and the 6.35 HEN
+
+[*] added check for 6.20-TN HEN's flash0 protection being enabled
+
+[*] added check for configured game mode plugins when on 6.20-TN and the 6.35 HEN
+
+[*] added detection of the PSP4000 model and the PSPgo
+
+[*] added appropriate handling of all of the above, when detected, to avoid unnecessary tears casted by users
+
+[*] added support to handle 6.00, 6.10 and 6.20 FWs for restore of (filewise) flash backup and clean install from scratch
+
+[*] added decryption of extracted (hidden) updater driver modules - and so enabling downgrade from 6.35+ (only on hackable PSPs though, for now)
+
+[*] added new firmware packs to install clean 6.20 OFW using Recovery Flasher
+
+[*] bundled the existing 5.50-GEN firmware packs with the main release

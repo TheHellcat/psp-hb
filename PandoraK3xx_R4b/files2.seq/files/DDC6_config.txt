@@ -1,0 +1,6 @@
+DOWN = "/TM/DC7/ipl.bin";
+CROSS = "/TM/150/ipl.bin";
+CIRCLE = "/TM/150_340/ipl.bin";
+TRIANGLE = "/TM/340OE/ipl.bin";
+SQUARE = "/TM/360M33/ipl.bin";
+UP = "/TM/pandora.bin";
